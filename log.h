@@ -51,6 +51,6 @@ typedef struct Log Log;
 extern Log *logptr;
 
 EXPORT_C void write_c(Log *ptr, char *msg);
-EXPORT_C void r_printf(char *format, ...);
+EXPORT_C void r_printf(const char *format, ...);
 
 #endif // LOG_H

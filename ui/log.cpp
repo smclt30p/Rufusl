@@ -48,8 +48,7 @@ void Log::on_buttonClear_clicked()
 
 void Log::write(char *msg)
 {
-    this->text->append(msg);
-    this->ui->logText->setPlainText(*this->text);
+    this->ui->logText->insertPlainText(msg);
     this->bar->setValue(bar->maximum());
     free(msg);
 }
@@ -58,7 +57,7 @@ void write_c(Log *ptr, char *msg) {
     emit ptr->call_write(msg);
 }
 
-void r_printf(char *format, ...) {
+void r_printf(const char *format, ...) {
 
     char *buf = (char*) malloc(4096);
     va_list argList;

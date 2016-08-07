@@ -1145,7 +1145,7 @@ static void write_tables(void) {
 
 int format_device_fat(char *device, int fatsize, int sectorsize, char *label) {
 
-  r_printf("mkfs.fat: Formatting %s, FAT%d, label: %s\n-------------------------------\n",
+  r_printf("mkfs.fat: Formatting %s, FAT%d, label: %s\n",
         device, fatsize, label);
 
   struct device_info devinfo;

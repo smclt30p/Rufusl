@@ -2,7 +2,7 @@
 #include "log.h"
 
 extern "C" {
-    #include "dosfstools/mkfs.fat.h"
+    #include "linux_devices/partition.h"
 }
 
 
@@ -12,10 +12,10 @@ RufusWorker::RufusWorker() : QThread()
 
 void RufusWorker::run()
 {
-    r_printf((char*)"rufusl: Formatting device FAT32 ... \n");
-    if (format_device_fat((char*)"/dev/sdb1", 32, 4096,(char*) "GALA") < 0) {
-        r_printf((char*)"rufusl: Formatting failed!\n");
+    r_printf((char*)"*** rufusl: Nuking and partitioning drive... \n");
+    if (nuke_and_partition("/dev/sdb", TABLE_MBR, FS_NTFS) < 0) {
+        r_printf((char*)"*** rufusl: Partitioning failed!\n");
     } else {
-        r_printf((char*)"rufusl: OK");
+        r_printf((char*)"*** rufusl: OK");
     }
 }

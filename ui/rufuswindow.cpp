@@ -4,7 +4,12 @@
 #include "ui_rufuswindow.h"
 #include "log.h"
 
-#define RUFUSL_VERION "0.1.20 Alpha"
+extern "C" {
+    #include "linux/user.h"
+}
+
+#define RUFUSL_VERSION "0.1.20 Alpha"
+#define MKFS_VERSION "4.0"
 
 #define FS_FAT32 0
 #define FS_NTFS 1
@@ -49,6 +54,12 @@ RufusWindow::RufusWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::Rufu
   ui->setupUi(this);
   setupUi();
   scan();
+  show();
+  if (!check_root()) {
+    r_printf("*** WARNING: Rufusl has been run as an unprivileged user.\n");
+  } else {
+      r_printf("*** rufusl: Running as root.\n");
+  }
 }
 
 void RufusWindow::on_buttonClose_clicked() {
@@ -113,6 +124,8 @@ void RufusWindow::setupUi()
      * source files */
 
     logptr = this->log;
+
+    r_printf("*** Rufus version %s\n*** mkfs.fat version %s\n", RUFUSL_VERSION, MKFS_VERSION);
 
     /* Add items to 'Cluster size' field */
 

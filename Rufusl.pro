@@ -15,6 +15,8 @@ CONFIG += c++11 O3
 
 QMAKE_CFLAGS_WARN_ON = -Wno-sign-compare
 
+LIBS += -L/lib -lparted
+
 SOURCES += main.cpp\
         ui/rufuswindow.cpp \
     ui/log.cpp \
@@ -25,7 +27,10 @@ SOURCES += main.cpp\
     dosfstools/device_info.c \
     dosfstools/blkdev/blkdev.c \
     rufusworker.cpp \
-    dosfstools/blkdev/linux_version.c
+    dosfstools/blkdev/linux_version.c \
+    linux_devices/partition.c \
+    linux_devices/mounting.c \
+    linux/user.c
 
 HEADERS  += ui/rufuswindow.h \
     log.h \
@@ -37,7 +42,10 @@ HEADERS  += ui/rufuswindow.h \
     dosfstools/blkdev/blkdev.h \
     rufusworker.h \
     dosfstools/blkdev/linux_version.h \
-    dosfstools/mkfs.fat.h
+    dosfstools/mkfs.fat.h \
+    linux_devices/partition.h \
+    linux_devices/mounting.h \
+    linux/user.h
 
 FORMS    += ui/rufuswindow.ui \
     ui/log.ui \

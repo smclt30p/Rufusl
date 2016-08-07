@@ -5,7 +5,6 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     RufusWindow w;
-    w.show();
-
+	a.setSetuidAllowed(true);
     return a.exec();
 }
