@@ -56,9 +56,11 @@ RufusWindow::RufusWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::Rufu
   scan();
   show();
   if (!check_root()) {
+      this->dialog->warning("WARNING: Rufusl has been run as an unprivileged user. Please re-run as root.\n");
+      //this->ui->container->setEnabled(false);
     r_printf("*** WARNING: Rufusl has been run as an unprivileged user.\n");
   } else {
-      r_printf("*** rufusl: Running as root.\n");
+      r_printf("*** Superuser: OK.\n");
   }
 }
 
@@ -98,7 +100,8 @@ void RufusWindow::on_buttonAbout_clicked() {
 
 void RufusWindow::on_buttonStart_clicked() {
 
-    this->worker = new RufusWorker();
+    int index = this->box->currentIndex();
+    this->worker = new RufusWorker(&devices[index]);
     this->worker->start();
 
 }
@@ -112,6 +115,8 @@ void RufusWindow::setupUi()
     /* Set up logger */
 
     this->log = new Log();
+    this->log->set_up(this->ui->progressBar, this->ui->statusEdit);
+    this->dialog = new ErrorDialog();
 
     /* Add DeviceComboBox to UI */
 

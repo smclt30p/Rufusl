@@ -12,12 +12,19 @@ Log::Log(QWidget *parent) : QDialog(parent), ui(new Ui::Log)
     ui->setupUi(this);
     text = new QString;
     this->bar = this->ui->logText->verticalScrollBar();
-    connect(this, SIGNAL(call_write(char*)), this, SLOT(write(char*)), Qt::QueuedConnection);
+
 }
 
 Log::~Log()
 {
     delete ui;
+}
+
+void Log::set_up(QProgressBar *bar, QLineEdit *edit) {
+    this->progressed = 0;
+    connect(this, SIGNAL(call_write(char*)), this, SLOT(write(char*)), Qt::QueuedConnection);
+    connect(this, SIGNAL(progress_set(int)), bar, SLOT(setValue(int)));
+    connect(this, SIGNAL(ticker_set(QString)), edit, SLOT(setText(QString)));
 }
 
 void Log::on_buttonClose_clicked()
@@ -68,3 +75,28 @@ void r_printf(const char *format, ...) {
 
 }
 
+EXPORT_C void add_progress_bar_(Log *ptr, int va) {
+    ptr->progressed += va;
+    emit ptr->progress_set(ptr->progressed);
+}
+
+EXPORT_C void add_progress_bar(int va) {
+    add_progress_bar_(logptr, va);
+}
+
+EXPORT_C void set_progress_bar_(Log *ptr, int va) {
+    emit ptr->progress_set(va);
+}
+
+EXPORT_C void set_progress_bar(int va) {
+    set_progress_bar_(logptr, va);
+}
+
+EXPORT_C void set_ticker_(Log *ptr,const char *text) {
+    QString string(text);
+    emit ptr->ticker_set(string);
+}
+
+EXPORT_C void set_ticker(const char *text) {
+    set_ticker_(logptr, text);
+}

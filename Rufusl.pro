@@ -30,7 +30,8 @@ SOURCES += main.cpp\
     dosfstools/blkdev/linux_version.c \
     linux_devices/partition.c \
     linux_devices/mounting.c \
-    linux/user.c
+    linux/user.c \
+    ui/errordialog.cpp
 
 HEADERS  += ui/rufuswindow.h \
     log.h \
@@ -45,8 +46,10 @@ HEADERS  += ui/rufuswindow.h \
     dosfstools/mkfs.fat.h \
     linux_devices/partition.h \
     linux_devices/mounting.h \
-    linux/user.h
+    linux/user.h \
+    ui/errordialog.h
 
 FORMS    += ui/rufuswindow.ui \
     ui/log.ui \
-    ui/about.ui
+    ui/about.ui \
+    ui/errordialog.ui

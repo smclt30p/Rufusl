@@ -58,9 +58,17 @@ int make_temp_dir() {
     r_printf("Creating temporary directory...\n");
     mkdir(TEMP_DIR, 0700);
   } else {
+
     DIR *dir;
     struct dirent *ent;
+
     dir = opendir(TEMP_DIR);
+
+    if (dir == NULL) {
+        r_printf("Failed to load tmpfs.\n");
+        return -1;
+    }
+
     while (ent = readdir(dir)) {
       if (ent->d_name[0] == '.') continue;
       i++;

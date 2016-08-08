@@ -14,6 +14,7 @@ extern "C" {
 #include "about.h"
 #include "devicecombobox.h"
 #include "rufusworker.h"
+#include "errordialog.h"
 
 #define MAX_DEVICES 32
 
@@ -51,6 +52,7 @@ private:
     uint8_t discovered = 0;
     DeviceComboBox *box;
     RufusWorker *worker;
+    ErrorDialog *dialog;
 
     void setupUi();
 

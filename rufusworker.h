@@ -3,7 +3,7 @@
 
 #include "QThread"
 #include "log.h"
-
+#include "linux_devices/devices.h"
 
 class RufusWorker : public QThread
 {
@@ -11,7 +11,8 @@ class RufusWorker : public QThread
     Q_OBJECT
 
 public:
-    RufusWorker();
+    RufusWorker(Device *chosen);
+    Device *theOne;
     void run();
 };
 
