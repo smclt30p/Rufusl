@@ -1148,6 +1148,8 @@ int format_device_fat(char *device, int fatsize, int sectorsize, char *label) {
   r_printf("mkfs.fat: Formatting %s, FAT%d, label: %s\n",
         device, fatsize, label);
 
+  strcpy(volume_name, label);
+
   struct device_info devinfo;
   uint64_t cblocks = 0;
   struct timeval create_timeval;
@@ -1159,7 +1161,7 @@ int format_device_fat(char *device, int fatsize, int sectorsize, char *label) {
 
   device_name = device;
   program_name = "mkfs.fat";
-  verbose = 2;
+  verbose = 1;
 
   gettimeofday(&create_timeval, NULL);
   create_time = create_timeval.tv_sec;

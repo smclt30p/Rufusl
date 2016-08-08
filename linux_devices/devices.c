@@ -25,12 +25,15 @@ int scan_devices(Device *dev, int array_size, uint8_t *discovered) {
 
     DIR *dp;
     struct dirent *ep;
+    char major[10];
+    char minor[10];
+    int i, j, len;
+    char devfile[150];
+    int index = 0;
+
     dp = opendir("/sys/block/");
 
   if (dp != NULL) {
-
-    char devfile[150];
-    int index = 0;
 
     while ((ep = readdir(dp))) {
 
@@ -109,6 +112,44 @@ int scan_devices(Device *dev, int array_size, uint8_t *discovered) {
                 if ((snprintf(devfile, sizeof(devfile), SYSFS_BLOCK_SIZE , ep->d_name)) < 0) return -1;
                 if (buffread(devfile, sizeof(devfile), devfile) < 0) return -1;
                 (*(dev + index)).capacity = strtol(devfile, NULL, 10);
+
+
+                /* Read devfile again to populate struct */
+
+                memset(devfile, 0, sizeof(devfile));
+                if ((snprintf(devfile, sizeof(devfile), SYSFS_BLOCK_DEVFILE , ep->d_name)) < 0) return -1;
+                if (buffread(devfile, sizeof(devfile), devfile) < 0) return -1;
+
+                /* Wipe buffer */
+
+                memset(minor, 0, sizeof(minor));
+                memset(major, 0, sizeof(major));
+
+                len = strlen(devfile);
+
+                /* Write digits up to ":" to buffer */
+
+                for (i = 0; i < len; i++) {
+                    if (devfile[i] == ':') break;
+                    major[i] = devfile[i];
+                }
+
+                /* Skip ":" char */
+
+                i++;
+
+                /* Read after ":" into buffer */
+
+                for (j = 0;i < len; i++) {
+                    if (devfile[i] == '\n') break;
+                    minor[j] = devfile[i];
+                    j++;
+                }
+
+                /* Cover buffer to long and cast long to short */
+
+                (*(dev + index)).minor = (uint8_t) strtol(minor, NULL, 10);
+                (*(dev + index)).major = (uint8_t) strtol(major, NULL, 10);
 
                 /* Increment number of discovered
                    devices and the index of the current

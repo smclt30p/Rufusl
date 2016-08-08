@@ -199,7 +199,9 @@ void RufusWindow::scan() {
   for (int i = 0; i < this->discovered; i++) {
 
     snprintf(buf, sizeof(buf), "%s %s (%s) [%.1lf GB]", devices[i].vendor,
-             devices[i].model, devices[i].device, devices[i].capacity * 512 / 1000000000.0f);;
+             devices[i].model, devices[i].device, devices[i].capacity * 512 / 1000000000.0f);
+
+    r_printf("Found %s, major: %d, minor: %d\n", buf, devices[i].major, devices[i].minor);
 
     this->box->addItem(buf);
 

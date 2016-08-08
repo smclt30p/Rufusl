@@ -8,6 +8,8 @@ typedef struct DEVICE {
   char model[255];
   char vendor[255];
   uint64_t capacity;
+  uint8_t minor;
+  uint8_t major;
 } Device;
 
 int scan_devices(struct DEVICE *dev, int array_size, uint8_t *discovered);

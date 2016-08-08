@@ -1,6 +1,8 @@
-#include "partition.h"
-#include <errno.h>
 #include <parted/parted.h>
+#include <errno.h>
+#include <unistd.h>
+
+#include "partition.h"
 #include "log.h"
 
 #define ASSERT(x, y) if (x == NULL) { r_printf(y); return -1; }
@@ -10,6 +12,7 @@
    below is OK! Why they did that is beyond me. */
 
 int nuke_and_partition(const char *path_dev, const int table, const int fs) {
+
   r_printf("Using device: %s\n", path_dev);
 
   PedDevice *device;
@@ -68,12 +71,14 @@ int nuke_and_partition(const char *path_dev, const int table, const int fs) {
   }
 
   ASSERT_(ped_disk_add_partition(disk, part, constr), "Failed to add partition to MBR\n");
-
   r_printf("Writing partition table to MBR on %s\n", path_dev);
-
   ASSERT_(ped_disk_commit_to_dev(disk) ,"FATAL ERROR: FAILED TO WRITE MBR TO DEVICE!\n");
+  r_printf("Refreshing kernel device partition info\n");
+  ASSERT_(ped_disk_commit_to_os(disk), "Error informing kernel of new partition!\n");
 
   ped_device_free_all();
+
+  sync();
 
   return 0;
 }
