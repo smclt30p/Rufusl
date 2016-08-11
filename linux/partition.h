@@ -11,3 +11,4 @@
 #define NTFS "ntfs"
 
 int nuke_and_partition(const char *path_dev, const int table, const int fs);
+int full_wipe(const char *device);

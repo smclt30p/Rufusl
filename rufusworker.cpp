@@ -27,11 +27,12 @@ RufusWorker::RufusWorker(Device *chosen) : QThread() {
 
 void RufusWorker::run() {
 
-  ASSERT(make_temp_dir(),                                               "STEP(1/5) - Creating temporary directory\n");
-  ASSERT(make_temp_device(theOne->major, theOne->minor),                "STEP(2/5) - Creating temporary device node\n");
-  ASSERT(nuke_and_partition(TEMP_DEVICE, TABLE_MBR, FS_NTFS),           "STEP(3/5) - Nuking and partitioning drive\n");
-  ASSERT(make_temp_partition(theOne->major, theOne->minor),             "STEP(4/5) - Creating temporary partition node\n");
-  ASSERT(format_fat32((char*)TEMP_PART, 6, (char*) "GALA"), "STEP(5/5) - Formatting\n");
+  ASSERT(make_temp_dir(),                                               "STEP(1/6) - Creating temporary directory\n");
+  ASSERT(make_temp_device(theOne->major, theOne->minor),                "STEP(2/6) - Creating temporary device node\n");
+  ASSERT(full_wipe(TEMP_DEVICE),                                        "STEP(3/6) - Full format\n");
+  ASSERT(nuke_and_partition(TEMP_DEVICE, TABLE_MBR, FS_NTFS),           "STEP(4/6) - Partitioning drive\n");
+  ASSERT(make_temp_partition(theOne->major, theOne->minor),             "STEP(5/6) - Creating temporary partition node\n");
+  ASSERT(format_fat32((char*)TEMP_PART, 6, (char*) "GALA"),             "STEP(6/6) - Formatting\n");
 
 }
 

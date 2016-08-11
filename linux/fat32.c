@@ -1,3 +1,23 @@
+/*
+ * FAT32 Formatting. This file is part of Rufusl.
+ *
+ * Copyright (C) 2016 Ognjen Galic
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+*/
+
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>
@@ -15,47 +35,82 @@
 int format_fat32(char *device, uint8_t cluster_size, char *label) {
 
     /* This portion declares the FAT32 BPB. Why I did it this way is because
-       constructing a BPB on-the-fly is redundant as most of the fields in the
-       BPB are constants for FAT32, and only a couple of bytes (around 20) need
-       actual modifying to construct a valid FAT32 file system that mounts fine on
-       Windows and passes fsck.fat with one error, and that is that the FSInfo
-       field is left uninitialized, but that is the way Windows 7 leaves it and
-       when the fs gets mounted on Linux it gets initialized. After an initial mount
-       on Linux, fsck.fat reports no errors on the fs. Also, all bootable and executable
-       code is left blank, so if someone boots from this partition by accident, they will
-       not get a message. FAT32 partitions are not bootable directly from the code in the BPB. */
+     * constructing a BPB on-the-fly is redundant as most of the fields in the
+     * BPB are constants for FAT32, and only a couple of bytes (around 20) need
+     * actual modifying to construct a valid FAT32 file system that mounts fine
+     * on Windows and passes fsck.fat with one error, and that is that the FSInfo
+     * field is left uninitialized, but that is the way Windows 7 leaves it and
+     * when the fs gets mounted on Linux it gets initialized. After an initial
+     * mount on Linux, fsck.fat reports no errors on the fs. Also, all bootable
+     * and executable code is left blank, so if someone boots from this partition
+     * by accident, they will not get a message. FAT32 partitions are not bootable
+     * directly from the code in the BPB.
+     *
+     *  Legend:
+     *
+     *   0 BPB BIOS Jump to nothing
+     *   3 OEM String: RUFUSL
+     *  11 BPB_BytsPerSec = 512B constant for compat - uint16_t
+     *  13 BPB_SecPerClus - Empty for populating - char
+     *  14 BPB_RsvdSecCnt = 32 constant for FAT32 - uint16_t
+     *  16 BPB_NumFATs - Constant 2 per FAT32 spec - uint8_t
+     *  17 BPB_RootEntCnt = 0 for FAT32 - uint16_t
+     *  19 BPB_TotSec16 = 0 for FAT32 - uint16_t
+     *  21 BPB_Media - Constant F8 for removable/solid media - uint8_t
+     *  22 BPB_FATSz16 = 0 for FAT32 - uint16_t
+     *  24 BPB_SecPerTrk = Obsolete - uint16_t
+     *  26 BPB_NumHeads = Obsolete - uint16_t
+     *  28 BPB_HiddSec = Obsolete - uint32_t
+     *  32 BPB_TotSec32 - Empty for populating - uint32_t
+     *  36 BPB_FATSz32 - Empty for populating - uint32_t
+     *  40 BPB_ExtFlags = 0 - No special flags - uint16_t
+     *  42 BPB_FSVer = 0 - Version 0 - uint16_t
+     *  44 BPB_RootClus = 2 for FAT32 - uint32_t
+     *  48 BPB_FSInfo = 1 for FAT32 - uint16_t
+     *  50 BPB_BkBootSec = 6 for FAT32 Microsoft recommended - uint16_t
+     *  52 BPB_Reserved - Reserved 12 bytes for nothing - char[12]
+     *  64 BS_DrvNum = 0x80, Windows 7 default - uint8_t
+     *  65 BS_Reserved1 = Byte reserved for nothing - uint8_t
+     *  66 BS_BootSig = 0x29, BOOT signature - uint8_t
+     *  67 BS_VolID = Volume ID - char[4]
+     *  71 BS_VolLab - Volume Label - char[11]
+     *  82 BS_FilSysType - "FAT32   " - char[8]
+     *  90 Dummy boot code
+     * 510 MBR Signature
+     * 512 Total
+    */
 
     unsigned char fat32_bpb[512] = {
 
-    /*  0 */ 0xEB, 0x00, 0x90, /* BPB BIOS Jump to nothing */
-    /*  3 */ 0x52, 0x55, 0x46, 0x55, 0x53, 0x4c, 0x00, 0x00, /* OEM String: RUFUSL\0 */
-    /* 11 */ 0x00, 0x02, /* BPB_BytsPerSec = 512B constant for compat - uint16_t */
-    /* 13 */ 0x00, /* BPB_SecPerClus - !!!  NEEDS POPULATING !!! - char */
-    /* 14 */ 0x20, 0x00, /* BPB_RsvdSecCnt = 32 constant for FAT32 - uint16_t */
-    /* 16 */ 0x02, /* BPB_NumFATs - Constant 2 per FAT32 spec - uint8_t */
-    /* 17 */ 0x00, 0x00, /* BPB_RootEntCnt = 0 for FAT32 - uint16_t */
-    /* 19 */ 0x00, 0x00, /* BPB_TotSec16 = 0 for FAT32 - uint16_t */
-    /* 21 */ 0xF8, /* BPB_Media - Constant F8 for removable/solid media - uint8_t */
-    /* 22 */ 0x00, 0x00, /* BPB_FATSz16 = 0 for FAT32 - uint16_t */
-    /* 24 */ 0xFF, 0xFF, /* BPB_SecPerTrk = Obsolete - uint16_t */
-    /* 26 */ 0xFF, 0xFF, /* BPB_NumHeads = Obsolete - uint16_t */
-    /* 28 */ 0x00, 0x00, 0x00, 0x00, /* BPB_HiddSec = Obsolete - uint32_t */
-    /* 32 */ 0x00, 0x00, 0x00, 0x00, /* BPB_TotSec32 - !!! NEEDS POPULATING !!! - uint32_t */
-    /* 36 */ 0x00, 0x00, 0x00, 0x00, /* BPB_FATSz32 - !!! NEEDS POPULATING !!! - uint32_t */
-    /* 40 */ 0x00, 0x00, /* BPB_ExtFlags = 0 - No special flags - uint16_t */
-    /* 42 */ 0x00, 0x00, /* BPB_FSVer = 0 - Version 0 - uint16_t */
-    /* 44 */ 0x02, 0x00, 0x00, 0x00, /* BPB_RootClus = 2 for FAT32 - uint32_t */
-    /* 48 */ 0x01, 0x00, /* BPB_FSInfo = 1 for FAT32 - uint16_t */
-    /* 50 */ 0x06, 0x00, /* BPB_BkBootSec = 6 for FAT32 Microsoft recommended - uint16_t */
+    /*  0 */ 0xEB, 0x00, 0x90,
+    /*  3 */ 0x52, 0x55, 0x46, 0x55, 0x53, 0x4c, 0x00, 0x00,
+    /* 11 */ 0x00, 0x02,
+    /* 13 */ 0x00,
+    /* 14 */ 0x20, 0x00,
+    /* 16 */ 0x02,
+    /* 17 */ 0x00, 0x00,
+    /* 19 */ 0x00, 0x00,
+    /* 21 */ 0xF8,
+    /* 22 */ 0x00, 0x00,
+    /* 24 */ 0xFF, 0xFF,
+    /* 26 */ 0xFF, 0xFF,
+    /* 28 */ 0x00, 0x00, 0x00, 0x00,
+    /* 32 */ 0x00, 0x00, 0x00, 0x00,
+    /* 36 */ 0x00, 0x00, 0x00, 0x00,
+    /* 40 */ 0x00, 0x00,
+    /* 42 */ 0x00, 0x00,
+    /* 44 */ 0x02, 0x00, 0x00, 0x00,
+    /* 48 */ 0x01, 0x00,
+    /* 50 */ 0x06, 0x00,
     /* 52 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* Reserved 12 bytes for nothing - char[12] */
-    /* 64 */ 0x80, /* BS_DrvNum = 0x80, Windows 7 default - uint8_t */
-    /* 65 */ 0x00, /* BS_Reserved1 = Byte reserved for nothing - uint8_t */
-    /* 66 */ 0x29, /* BS_BootSig = 0x29, BOOT signature - uint8_t */
-    /* 67 */ 0xBE, 0xBA, 0xFE, 0xCA, /* BS_VolID[4] = Volume ID - char[4] */
+             0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    /* 64 */ 0x80,
+    /* 65 */ 0x00,
+    /* 66 */ 0x29,
+    /* 67 */ 0xBE, 0xBA, 0xFE, 0xCA,
     /* 71 */ 0x4E, 0x4F, 0x20, 0x4E, 0x41, 0x4D,
-             0x45, 0x20, 0x20, 0x20, 0x20, /* BS_VolLab - Volume Label !!! NEEDS POPULATING !!! - char[11] */
-    /* 82 */ 0x46, 0x41, 0x54, 0x33, 0x32, 0x20, 0x20, 0x20, /* BS_FilSysType - "FAT32   " - char[8] */
+             0x45, 0x20, 0x20, 0x20, 0x20,
+    /* 82 */ 0x46, 0x41, 0x54, 0x33, 0x32, 0x20, 0x20, 0x20,
     /* 90 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -85,8 +140,8 @@ int format_fat32(char *device, uint8_t cluster_size, char *label) {
              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* Empty space */
-   /* 510 */ 0x55, 0xAA /* MBR Signature */
+             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+   /* 510 */ 0x55, 0xAA
    /* 512 Total */
 
     };

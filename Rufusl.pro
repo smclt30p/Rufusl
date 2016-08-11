@@ -47,3 +47,5 @@ FORMS    += ui/rufuswindow.ui \
     ui/log.ui \
     ui/about.ui \
     ui/errordialog.ui
+
+DISTFILES +=
