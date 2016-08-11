@@ -3,7 +3,7 @@
 
 #include "QThread"
 #include "log.h"
-#include "linux_devices/devices.h"
+#include "linux/devices.h"
 
 class RufusWorker : public QThread
 {

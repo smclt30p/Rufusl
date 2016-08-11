@@ -6,7 +6,7 @@
 extern "C" {
 
 #include <stdint.h>
-#include "linux_devices/devices.h"
+#include "linux/devices.h"
 
 }
 

@@ -21,33 +21,27 @@ SOURCES += main.cpp\
         ui/rufuswindow.cpp \
     ui/log.cpp \
     ui/about.cpp \
-    linux_devices/devices.c \
     ui/devicecombobox.cpp \
-    dosfstools/mkfs.fat.c \
-    dosfstools/device_info.c \
-    dosfstools/blkdev/blkdev.c \
     rufusworker.cpp \
-    dosfstools/blkdev/linux_version.c \
-    linux_devices/partition.c \
-    linux_devices/mounting.c \
     linux/user.c \
-    ui/errordialog.cpp
+    ui/errordialog.cpp \
+    linux/devices.c \
+    linux/mounting.c \
+    linux/partition.c \
+    linux/fat32.c
+
 
 HEADERS  += ui/rufuswindow.h \
     log.h \
     ui/about.h \
-    linux_devices/devices.h \
     ui/devicecombobox.h \
-    dosfstools/device_info.h \
-    dosfstools/msdos_fs.h \
-    dosfstools/blkdev/blkdev.h \
     rufusworker.h \
-    dosfstools/blkdev/linux_version.h \
-    dosfstools/mkfs.fat.h \
-    linux_devices/partition.h \
-    linux_devices/mounting.h \
     linux/user.h \
-    ui/errordialog.h
+    ui/errordialog.h \
+    linux/devices.h \
+    linux/mounting.h \
+    linux/partition.h \
+    linux/fat32.h
 
 FORMS    += ui/rufuswindow.ui \
     ui/log.ui \

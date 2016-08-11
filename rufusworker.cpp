@@ -2,9 +2,9 @@
 #include "log.h"
 
 extern "C" {
-#include "linux_devices/mounting.h"
-#include "linux_devices/partition.h"
-#include "dosfstools/mkfs.fat.h"
+#include "linux/mounting.h"
+#include "linux/partition.h"
+#include "linux/fat32.h"
 }
 
 #define ASSERT(x, y)\
@@ -31,7 +31,7 @@ void RufusWorker::run() {
   ASSERT(make_temp_device(theOne->major, theOne->minor),                "STEP(2/5) - Creating temporary device node\n");
   ASSERT(nuke_and_partition(TEMP_DEVICE, TABLE_MBR, FS_NTFS),           "STEP(3/5) - Nuking and partitioning drive\n");
   ASSERT(make_temp_partition(theOne->major, theOne->minor),             "STEP(4/5) - Creating temporary partition node\n");
-  ASSERT(format_device_fat((char*)TEMP_PART, 32, 4096, (char*) "GALA"), "STEP(5/5) - Formatting\n");
+  ASSERT(format_fat32((char*)TEMP_PART, 6, (char*) "GALA"), "STEP(5/5) - Formatting\n");
 
 }
 
