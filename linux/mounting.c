@@ -4,19 +4,19 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <ftw.h>
+#include <linux/loop.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
-#include <linux/loop.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <ftw.h>
 
 #include "../log.h"
-#include "mounting.h"
 #include "definitions.h"
+#include "mounting.h"
 
 #define BUF_SIZE 4096
 
@@ -25,8 +25,8 @@ static char *dest;
 static long file_count = 0;
 static long files_copied = 0;
 
-int make_temp_device(uint8_t major, uint8_t minor, uint32_t *device_fd) {
 
+int make_temp_device(uint8_t major, uint8_t minor, uint32_t *device_fd) {
   remove(TEMP_DEVICE);
 
   r_printf("Creating temporary node for Rufusl: major: %d minor %d\n", major,
@@ -44,8 +44,8 @@ int make_temp_device(uint8_t major, uint8_t minor, uint32_t *device_fd) {
   r_printf("Opening device for writing ... ");
 
   if ((*device_fd = open(TEMP_DEVICE, O_RDWR)) < 0) {
-      r_printf("Error opening: %s\n", strerror(errno));
-      return -1;
+    r_printf("Error opening: %s\n", strerror(errno));
+    return -1;
   }
 
   r_printf(" OK! fd: %d\n", *device_fd);
@@ -69,16 +69,14 @@ int make_temp_partition(uint8_t major, uint8_t minor, uint32_t *part_fd) {
   r_printf("Opening partition for writing ... ");
 
   if ((*part_fd = open(TEMP_PART, O_RDWR)) < 0) {
-      r_printf("Error opening: %s\n", strerror(errno));
-      return -1;
+    r_printf("Error opening: %s\n", strerror(errno));
+    return -1;
   }
 
   r_printf(" OK! fd: %d\n", *part_fd);
-
 }
 
 int make_temp_dir(const char *path) {
-
   umount(path);
 
   struct stat st = {0};
@@ -124,7 +122,6 @@ int make_temp_dir(const char *path) {
 
 int callback(const char *fpath, const struct stat *sb, int typeflag,
              struct FTW *ftwbuf) {
-
   /* Allocate new array and copy fpath into it because
      nftw() has an assertion if fpath has been changed. */
 
@@ -170,17 +167,21 @@ int callback(const char *fpath, const struct stat *sb, int typeflag,
   ssize_t numRead;
 
   r_printf("Extracting: %s\n", dest_path);
-  set_progress_bar((int) ((( (float) file_count - ( (float) file_count - (float) files_copied)) / (float) file_count) * 100.0f));
+  set_progress_bar(
+      (int)((((float)file_count - ((float)file_count - (float)files_copied)) /
+             (float)file_count) *
+            100.0f));
 
-  // set_progress_bar(  (file_count - (file_count - files_copied) / file_count) * 100.0f  );
+  // set_progress_bar(  (file_count - (file_count - files_copied) / file_count)
+  // * 100.0f  );
 
   char buf1[BUF_SIZE];
 
   inputFd = open(fpath, O_RDONLY);
 
   if (inputFd == -1) {
-      r_printf("Error: %s\n", strerror(errno));
-      return -1;
+    r_printf("Error: %s\n", strerror(errno));
+    return -1;
   }
 
   openFlags = O_CREAT | O_WRONLY;
@@ -201,112 +202,109 @@ int callback(const char *fpath, const struct stat *sb, int typeflag,
   }
 
   if (numRead == -1) {
-      r_printf("Error: %s\n", strerror(errno));
-      return -1;
+    r_printf("Error: %s\n", strerror(errno));
+    return -1;
   }
   if (close(outputFd) == -1) {
-      r_printf("Error: %s\n", strerror(errno));
-      return -1;
+    r_printf("Error: %s\n", strerror(errno));
+    return -1;
   }
   if (close(inputFd) == -1) {
-      r_printf("Error: %s\n", strerror(errno));
-      return -1;
+    r_printf("Error: %s\n", strerror(errno));
+    return -1;
   }
 
   return 0;
 }
 
 int count_files(const char *fpath, const struct stat *sb, int typeflag,
-             struct FTW *ftwbuf) {
-    file_count++;
-    return 0;
+                struct FTW *ftwbuf) {
+  file_count++;
+  return 0;
 }
 
-int recursive_copy( char *src,  char *dest_) {
+int recursive_copy(char *src, char *dest_) {
+  source = src;
+  dest = dest_;
 
-    source = src;
-    dest = dest_;
+  files_copied = 0;
+  file_count = 0;
 
-    files_copied = 0;
-    file_count = 0;
-
-    r_printf("Counting files...\n");
-    nftw(source, count_files, 4, 0);
-    nftw(source, callback , 4, 0);
-
+  r_printf("Counting files...\n");
+  nftw(source, count_files, 4, 0);
+  nftw(source, callback, 4, 0);
 }
 
-void clean_up(const uint32_t *dev_fd, const uint32_t *part_fd, const uint32_t *loop_fd) {
+void clean_up(const uint32_t *dev_fd, const uint32_t *part_fd,
+              const uint32_t *loop_fd) {
+  r_printf("Cleaning up...\n");
 
-    r_printf("Cleaning up...\n");
+  sync();
 
-    sync();
+  umount(TEMP_DIR_ISO);
+  ioctl(*loop_fd, LOOP_CLR_FD);
+  remove(TEMP_DIR_ISO);
+  close(*loop_fd);
 
-    umount(TEMP_DIR);
-    umount(TEMP_DIR_ISO);
-    remove(TEMP_DIR);
-    remove(TEMP_DIR_ISO);
-    remove(TEMP_DEVICE);
-    remove(TEMP_PART);
-    remove(TEMP_LOOP);
-    close(*part_fd);
-    close(*dev_fd);
-    ioctl(*loop_fd, LOOP_CLR_FD);
-    close(*loop_fd);
+  umount(TEMP_DIR);
+  remove(TEMP_DIR);
 
-    r_printf("Rufus finnished all tasks.\n");
+  close(*part_fd);
+  close(*dev_fd);
 
+  remove(TEMP_DEVICE);
+  remove(TEMP_PART);
+  remove(TEMP_LOOP);
+
+  r_printf("Rufus finnished all tasks.\n");
 }
 
 int make_loop_device(uint32_t *loop_fd) {
-
-    if (access(TEMP_LOOP, R_OK) == 0) {
-        int file_fd = open(TEMP_LOOP, O_RDONLY);
-        if (file_fd < 0) {
-            r_printf("Loop error: %s\n", strerror(errno));
-            return -1;
-        }
-
-        if (ioctl(file_fd, LOOP_CLR_FD) < 0) {
-            r_printf("Loop device sane, skipping creation\n");
-
-            if ((*loop_fd = open(TEMP_LOOP, O_RDONLY)) < 0) {
-                r_printf("Error opening loop: %s\n", strerror(errno));
-                return -1;
-            }
-
-            r_printf("Loop fd: %d\n", *loop_fd);
-
-            return 0;
-        }
-    }
-
-    if (remove(TEMP_LOOP) < 0) {
-        r_printf("Loop clear error: %s\n", strerror(errno));
-    }
-
-    dev_t temp_dev = makedev(7, 0);
-
-    if (temp_dev < 0) return -1;
-
-    if (mknod(TEMP_LOOP, S_IFBLK, temp_dev) < 0) {
-      r_printf("Creating loop node failed: %s\n", strerror(errno));
+  if (access(TEMP_LOOP, R_OK) == 0) {
+    int file_fd = open(TEMP_LOOP, O_RDONLY);
+    if (file_fd < 0) {
+      r_printf("Loop error: %s\n", strerror(errno));
       return -1;
     }
 
-    if ((*loop_fd = open(TEMP_LOOP, O_RDONLY)) < 0) {
+    if (ioctl(file_fd, LOOP_CLR_FD) < 0) {
+      r_printf("Loop device sane, skipping creation\n");
+
+      if ((*loop_fd = open(TEMP_LOOP, O_RDONLY)) < 0) {
         r_printf("Error opening loop: %s\n", strerror(errno));
         return -1;
+      }
+
+      r_printf("Loop fd: %d\n", *loop_fd);
+
+      return 0;
     }
+  }
 
-    r_printf("Loop OK, fd: %d\n", *loop_fd);
+  if (remove(TEMP_LOOP) < 0) {
+    r_printf("Loop clear error: %s\n", strerror(errno));
+  }
 
-    return 0;
+  dev_t temp_dev = makedev(7, 0);
 
+  if (temp_dev < 0) return -1;
+
+  if (mknod(TEMP_LOOP, S_IFBLK, temp_dev) < 0) {
+    r_printf("Creating loop node failed: %s\n", strerror(errno));
+    return -1;
+  }
+
+  if ((*loop_fd = open(TEMP_LOOP, O_RDONLY)) < 0) {
+    r_printf("Error opening loop: %s\n", strerror(errno));
+    return -1;
+  }
+
+  r_printf("Loop OK, fd: %d\n", *loop_fd);
+
+  return 0;
 }
 
 int mount_device_to_temp(const int32_t *file_system) {
-
   switch (*file_system) {
     case FS_FAT32:
       if (mount(TEMP_PART, TEMP_DIR, MOUNT_FAT32, MS_MGC_VAL, NULL) < 0) {
@@ -323,57 +321,61 @@ int mount_device_to_temp(const int32_t *file_system) {
       r_printf("Mount OK\n");
       break;
   }
-
 }
 
-int mount_iso_to_loop(const char *isopath, int isopath_len, const uint32_t *loop_fd) {
+int mount_iso_to_loop(const char *isopath, int isopath_len,
+                      const uint32_t *loop_fd) {
+  /* We need the lenght of the ISO path because QString is the !~~ FuTuRe ~~!
+   * (tm) (c) */
 
-    /* We need the lenght of the ISO path because QString is the !~~ FuTuRe ~~! (tm) (c) */
+  char c_path[isopath_len + 1];
+  memcpy(c_path, isopath, (size_t)isopath_len);
+  c_path[isopath_len] = 0x00;
 
-    char c_path[isopath_len + 1];
-    memcpy(c_path, isopath, (size_t) isopath_len);
-    c_path[isopath_len + 1] = 0x00;
+  r_printf("Using ISO: %s\n", c_path);
 
-    r_printf("Using ISO: %s\n", c_path);
+  int32_t iso_fd = open(c_path, O_RDWR);
 
-   int32_t iso_fd = open(c_path, O_RDWR);
+  if (iso_fd < 0) {
+    r_printf("Opening iso failed: %s\n", strerror(errno));
+    return -1;
+  }
 
-   if (iso_fd < 0) { r_printf("Opening iso failed: %s\n", strerror(errno)); return -1; }
+  ioctl(*loop_fd, LOOP_CLR_FD);
 
-   ioctl(*loop_fd, LOOP_CLR_FD);
+  if (ioctl(*loop_fd, LOOP_SET_FD, iso_fd) < 0) {
+    r_printf("ioctl loop error 1: %s\n", strerror(errno));
+    close(iso_fd);
+    return -1;
+  }
 
-   if (ioctl(*loop_fd, LOOP_SET_FD, iso_fd) < 0 ) {
-       r_printf("ioctl loop error 1: %s\n", strerror(errno));
-       close(iso_fd);
-       return -1;
-   }
+  if (close(iso_fd) < 0) {
+    r_printf("close iso error: %s\n", strerror(errno));
+    return -1;
+  }
 
-   if (close(iso_fd) < 0) {
-       r_printf("close iso error: %s\n", strerror(errno));
-       return -1;
-   }
+  struct loop_info64 info;
 
-   struct loop_info64 info;
+  info.lo_offset = 0;
+  info.lo_sizelimit = 0;
+  info.lo_encrypt_type = 0;
 
-   info.lo_offset = 0;
-   info.lo_sizelimit = 0;
-   info.lo_encrypt_type = 0;
+  r_printf("Mounting ISO on %s ... ", TEMP_DIR_ISO);
 
-   if (ioctl(*loop_fd, LOOP_SET_STATUS64, &info) < 0) {
-       r_printf("ioctl loop error 2: %s\n", strerror(errno));
-       return -1;
-   }
+  int return_;
 
-   r_printf("Mounting ISO on %s ... ", TEMP_DIR_ISO);
+  return_ = mount(TEMP_LOOP, TEMP_DIR_ISO, MOUNT_UDF, MS_MGC_VAL | MS_RDONLY, NULL);
 
-   if (mount(TEMP_LOOP, TEMP_DIR_ISO, MOUNT_LOOP, MS_MGC_VAL | MS_RDONLY, NULL) < 0) {
-       r_printf("ISO Mount failed: %s\n", strerror(errno));
-       return -1;
-   }
+  if (return_ < 0 || errno == EINVAL) {
+      r_printf("Not an UDF image, falling back to ISO9660.\n");
+      return_ = mount(TEMP_LOOP, TEMP_DIR_ISO, MOUNT_ISO9660, MS_MGC_VAL | MS_RDONLY, NULL);
+  }
 
-   r_printf("OK!\n");
+  if (return_ < 0) {
+      r_printf("Selected file is not valid.\n");
+  }
 
-   return 0;
+  r_printf("OK!\n");
 
+  return 0;
 }
-

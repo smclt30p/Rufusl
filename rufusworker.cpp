@@ -68,6 +68,13 @@ void RufusWorker::run() {
 
   clean_up(&device_fd, &part_fd, &loop_fd);
 
+  this->theOne = NULL;
+  this->cluster_size  = 255;
+  this->partition_scheme  = 255;
+  this->file_system  = 255;
+  this->full_format  = 255;
+  this->isopath  = NULL;
+
 }
 
 

@@ -37,7 +37,8 @@
 
 #define MOUNT_FAT32 "vfat"
 #define MOUNT_NTFS "ntfs"
-#define MOUNT_LOOP "iso9660"
+#define MOUNT_ISO9660 "iso9660"
+#define MOUNT_UDF "udf"
 
 #endif // DEFINITIONS
 

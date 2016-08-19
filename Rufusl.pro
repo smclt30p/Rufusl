@@ -28,7 +28,8 @@ SOURCES += main.cpp\
     linux/devices.c \
     linux/mounting.c \
     linux/partition.c \
-    linux/fat32.c
+    linux/fat32.c \
+    iso.c
 
 
 HEADERS  += ui/rufuswindow.h \
@@ -42,7 +43,8 @@ HEADERS  += ui/rufuswindow.h \
     linux/mounting.h \
     linux/partition.h \
     linux/fat32.h \
-    definitions.h
+    definitions.h \
+    iso.h
 
 FORMS    += ui/rufuswindow.ui \
     ui/log.ui \

@@ -1,0 +1,8 @@
+#ifndef ISO_H
+#define ISO_H
+
+#define LABEL_OFFSET 0x8028
+#define ISO9660_SIGNATURE_OFFSET 0x8001
+#define ISO9660_SIGNATURE "CD001"
+
+#endif // ISO_H
