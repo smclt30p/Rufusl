@@ -2,6 +2,7 @@
 #define RUFUSWINDOW_H
 
 #include <QMainWindow>
+#include <QFileDialog>
 
 extern "C" {
 
@@ -31,6 +32,7 @@ class RufusWindow : public QMainWindow
 public:
 
     explicit RufusWindow(QWidget *parent = 0);
+    QString *iso_path;
     void scan();
     ~RufusWindow();
 
@@ -43,6 +45,8 @@ private slots:
     void on_buttonStart_clicked();
     void setProgress(int);
 
+    void on_usingSearch_clicked();
+
 private:
 
     Ui::RufusWindow *ui;
@@ -53,6 +57,7 @@ private:
     DeviceComboBox *box;
     RufusWorker *worker;
     ErrorDialog *dialog;
+    QFileDialog *file_dialog;
 
     void setupUi();
 

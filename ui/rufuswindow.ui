@@ -32,6 +32,9 @@
    <string>Rufusl 0.1</string>
   </property>
   <widget class="QWidget" name="container">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <widget class="QLabel" name="deviceLabel">
     <property name="geometry">
      <rect>
@@ -184,10 +187,10 @@ QGroupBox::title {
           <item>
            <widget class="QCheckBox" name="formatCheck">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="statusTip">
-             <string>All formats on Linux are performed quickly.</string>
+             <string/>
             </property>
             <property name="whatsThis">
              <string/>

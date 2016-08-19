@@ -31,8 +31,9 @@
 
 #include "fat32.h"
 #include "log.h"
+#include "definitions.h"
 
-int format_fat32(char *device, uint8_t cluster_size, char *label) {
+int format_fat32(const uint32_t *part_fd, uint8_t cluster_size, char *label) {
 
     /* This portion declares the FAT32 BPB. Why I did it this way is because
      * constructing a BPB on-the-fly is redundant as most of the fields in the
@@ -206,20 +207,12 @@ int format_fat32(char *device, uint8_t cluster_size, char *label) {
 
     const uint16_t BPB_ResvdSecCnt = 32;
 
-    int file_fd;
     uint8_t BPB_SecPerClus;
     uint64_t DskSize;
 
     const uint8_t BPB_NumFATs = 2;
 
-    file_fd = open(device, O_RDWR);
-
-    if (file_fd < 0) {
-        perror("open");
-        return -1;
-    }
-
-    if (ioctl(file_fd, BLKGETSIZE, &DskSize) < 0) {
+    if (ioctl(*part_fd, BLKGETSIZE, &DskSize) < 0) {
         perror("ioctl");
         return -1;
     }
@@ -229,27 +222,47 @@ int format_fat32(char *device, uint8_t cluster_size, char *label) {
         return -1;
     }
 
-    if (cluster_size > 64 || cluster_size % 2 != 0 || cluster_size == 0) {
+    switch (cluster_size) {
+      case BS_512B:
+        BPB_SecPerClus = 1;
+        break;
+      case BS_1024B:
+        BPB_SecPerClus = 2;
+        break;
+      case BS_2048B:
+        BPB_SecPerClus = 4;
+        break;
+      case BS_4096B:
+        BPB_SecPerClus = 8;
+        break;
+      case BS_8192B:
+        BPB_SecPerClus = 16;
+        break;
+      case BS_16384B:
+        BPB_SecPerClus = 32;
+        break;
+      case BS_32768B:
+        BPB_SecPerClus = 64;
+        break;
+      default:
 
         r_printf("Autosetting cluster size.\n");
 
         if (DskSize < 66600) {
-            r_printf("ERROR: Volume is too small!\n");
-            return -1;
+          r_printf("ERROR: Volume is too small!\n");
+          return -1;
         } else if (DskSize < 532480) {
-            BPB_SecPerClus = 1;
+          BPB_SecPerClus = 1;
         } else if (DskSize < 16777216) {
-            BPB_SecPerClus = 8;
-        } else if (DskSize < 33554432){
-            BPB_SecPerClus = 16;
+          BPB_SecPerClus = 8;
+        } else if (DskSize < 33554432) {
+          BPB_SecPerClus = 16;
         } else if (DskSize < 67108864) {
-            BPB_SecPerClus = 32;
+          BPB_SecPerClus = 32;
         } else if (DskSize < 0xFFFFFFFF) {
-            BPB_SecPerClus = 64;
+          BPB_SecPerClus = 64;
         }
 
-    } else {
-        BPB_SecPerClus = cluster_size;
     }
 
     uint32_t BPB_TotSec32 = (uint32_t) DskSize; /* Transition to 32-bit */
@@ -264,7 +277,7 @@ int format_fat32(char *device, uint8_t cluster_size, char *label) {
 
     /* Some debug informatio */
 
-    r_printf("Device: %s\n", device);
+    r_printf("Device fd: %d\n", *part_fd);
     r_printf("Label: %s\n",label);
     r_printf("Sectors per cluter: %d\n", BPB_SecPerClus);
     r_printf("Total sectors: %d\n", BPB_TotSec32);
@@ -310,23 +323,18 @@ int format_fat32(char *device, uint8_t cluster_size, char *label) {
         }
     }
 
-    r_printf("File descriptor: %d\n", file_fd);
+    r_printf("File descriptor: %d\n", *part_fd);
 
     /* See the macro on the beginning of the file */
 
-    SEEKNWRITE(file_fd, 0, fat32_bpb, 512);                                     /* Write first BPB */
-    SEEKNWRITE(file_fd, 512, fat32_fsi, 512);                                   /* Write first FSI */
-    SEEKNWRITE(file_fd, 3072, fat32_bpb, 512);                                  /* Write second BPB */
-    SEEKNWRITE(file_fd, 3584, fat32_fsi, 512);                                  /* Write second FSI */
-    SEEKNWRITE(file_fd, BPB_ResvdSecCnt * 512, fat32_fat, 12);                  /* Write first FAT */
-    SEEKNWRITE(file_fd, (BPB_ResvdSecCnt + BPB_FATSz32) * 512, fat32_fat, 12);  /* Write second FAT */
+    SEEKNWRITE(*part_fd, 0, fat32_bpb, 512);                                     /* Write first BPB */
+    SEEKNWRITE(*part_fd, 512, fat32_fsi, 512);                                   /* Write first FSI */
+    SEEKNWRITE(*part_fd, 3072, fat32_bpb, 512);                                  /* Write second BPB */
+    SEEKNWRITE(*part_fd, 3584, fat32_fsi, 512);                                  /* Write second FSI */
+    SEEKNWRITE(*part_fd, BPB_ResvdSecCnt * 512, fat32_fat, 12);                  /* Write first FAT */
+    SEEKNWRITE(*part_fd, (BPB_ResvdSecCnt + BPB_FATSz32) * 512, fat32_fat, 12);  /* Write second FAT */
 
     sync();
-
-    if (close(file_fd) < 0) {
-        perror("close");
-        return -2;
-    }
 
     return 0;
 }

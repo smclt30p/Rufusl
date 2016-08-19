@@ -10,4 +10,4 @@
         return -1; \
     } \
 
-int format_fat32(char *device, uint8_t cluster_size, char *label);
+int format_fat32(const uint32_t *part_fd, uint8_t cluster_size, char *label);

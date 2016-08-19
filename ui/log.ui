@@ -36,6 +36,12 @@
        <property name="enabled">
         <bool>true</bool>
        </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>7</pointsize>
+        </font>
+       </property>
        <property name="undoRedoEnabled">
         <bool>false</bool>
        </property>
