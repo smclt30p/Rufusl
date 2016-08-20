@@ -16,6 +16,7 @@ private:
     int partition_scheme;
     int full_format;
     const QString *isopath;
+    uint8_t job_type;
 
 public:
 
@@ -24,7 +25,8 @@ public:
                 int file_system,
                 int cluster_size,
                 int full_format,
-                const QString *isopath);
+                const QString *isopath,
+                uint8_t job_type);
 
     Device *theOne;
     void run();

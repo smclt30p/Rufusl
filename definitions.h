@@ -40,5 +40,8 @@
 #define MOUNT_ISO9660 "iso9660"
 #define MOUNT_UDF "udf"
 
+#define JOB_SCAN 1
+#define JOB_COPY 2
+
 #endif // DEFINITIONS
 

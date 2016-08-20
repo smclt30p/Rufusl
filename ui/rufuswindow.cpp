@@ -79,13 +79,19 @@ void RufusWindow::on_buttonStart_clicked() {
         return;
     }
 
+    if (this->discovered == 0) {
+        this->dialog->warning("No removable SCSI devices found.");
+        return;
+    }
+
     int index = this->box->currentIndex();
     this->worker = new RufusWorker(&devices[index],
                                    ui->partitionCombo->currentIndex(),
                                    ui->fsCombo->currentIndex(),
                                    ui->clusterCombo->currentIndex(),
                                    ui->formatCheck->isChecked(),
-                                   this->iso_path);
+                                   this->iso_path,
+                                   JOB_COPY);
     this->worker->start();
 
 }
@@ -202,9 +208,11 @@ RufusWindow::~RufusWindow() {
 void RufusWindow::on_usingSearch_clicked()
 {
     file_dialog = new QFileDialog;
-    file_dialog->show();
     this->iso_path = new QString(file_dialog->getOpenFileName());
     file_dialog->close();
+    if (this->iso_path->size() == 0) return;
+    this->worker = new RufusWorker(NULL, 0xFF, 0xFF, 0xFF, 0xFF, this->iso_path, JOB_SCAN);
+    this->worker->start();
 
     // RufusWorker scan_iso() ...
 }

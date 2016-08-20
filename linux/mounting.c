@@ -43,9 +43,11 @@ int make_temp_device(uint8_t major, uint8_t minor, uint32_t *device_fd) {
 
   r_printf("Opening device for writing ... ");
 
-  if ((*device_fd = open(TEMP_DEVICE, O_RDWR)) < 0) {
-    r_printf("Error opening: %s\n", strerror(errno));
-    return -1;
+  *device_fd = open(TEMP_DEVICE, O_RDWR);
+
+  if (*device_fd < 0) {
+      r_printf("Error opening device: %s\n", strerror(errno));
+      return -1;
   }
 
   r_printf(" OK! fd: %d\n", *device_fd);
@@ -236,7 +238,8 @@ int recursive_copy(char *src, char *dest_) {
 }
 
 void clean_up(const uint32_t *dev_fd, const uint32_t *part_fd,
-              const uint32_t *loop_fd) {
+              const uint32_t *loop_fd,
+              const uint32_t *iso_fd) {
   r_printf("Cleaning up...\n");
 
   sync();
@@ -251,6 +254,7 @@ void clean_up(const uint32_t *dev_fd, const uint32_t *part_fd,
 
   close(*part_fd);
   close(*dev_fd);
+  close(*iso_fd);
 
   remove(TEMP_DEVICE);
   remove(TEMP_PART);
@@ -282,7 +286,12 @@ int make_loop_device(uint32_t *loop_fd) {
   }
 
   if (remove(TEMP_LOOP) < 0) {
-    r_printf("Loop clear error: %s\n", strerror(errno));
+      if (errno == ENOENT) {
+          r_printf("Loop device is clear.\n");
+      } else {
+          r_printf("Loop clear error: %s\n", strerror(errno));
+          return -1;
+      }
   }
 
   dev_t temp_dev = makedev(7, 0);
@@ -324,7 +333,9 @@ int mount_device_to_temp(const int32_t *file_system) {
 }
 
 int mount_iso_to_loop(const char *isopath, int isopath_len,
-                      const uint32_t *loop_fd) {
+                      const uint32_t *loop_fd,
+                      uint32_t *iso_fd) {
+
   /* We need the lenght of the ISO path because QString is the !~~ FuTuRe ~~!
    * (tm) (c) */
 
@@ -334,23 +345,17 @@ int mount_iso_to_loop(const char *isopath, int isopath_len,
 
   r_printf("Using ISO: %s\n", c_path);
 
-  int32_t iso_fd = open(c_path, O_RDWR);
+  *iso_fd = open(c_path, O_RDWR);
 
-  if (iso_fd < 0) {
+  if (*iso_fd < 0) {
     r_printf("Opening iso failed: %s\n", strerror(errno));
     return -1;
   }
 
   ioctl(*loop_fd, LOOP_CLR_FD);
 
-  if (ioctl(*loop_fd, LOOP_SET_FD, iso_fd) < 0) {
+  if (ioctl(*loop_fd, LOOP_SET_FD, *iso_fd) < 0) {
     r_printf("ioctl loop error 1: %s\n", strerror(errno));
-    close(iso_fd);
-    return -1;
-  }
-
-  if (close(iso_fd) < 0) {
-    r_printf("close iso error: %s\n", strerror(errno));
     return -1;
   }
 
@@ -360,22 +365,23 @@ int mount_iso_to_loop(const char *isopath, int isopath_len,
   info.lo_sizelimit = 0;
   info.lo_encrypt_type = 0;
 
-  r_printf("Mounting ISO on %s ... ", TEMP_DIR_ISO);
+  r_printf("Mounting ISO on %s\n", TEMP_DIR_ISO);
 
   int return_;
 
   return_ = mount(TEMP_LOOP, TEMP_DIR_ISO, MOUNT_UDF, MS_MGC_VAL | MS_RDONLY, NULL);
 
   if (return_ < 0 || errno == EINVAL) {
-      r_printf("Not an UDF image, falling back to ISO9660.\n");
+      r_printf(" * Image format is ISO9660.\n");
       return_ = mount(TEMP_LOOP, TEMP_DIR_ISO, MOUNT_ISO9660, MS_MGC_VAL | MS_RDONLY, NULL);
+  } else {
+      r_printf(" * Image format is UDF\n");
   }
 
   if (return_ < 0) {
       r_printf("Selected file is not valid.\n");
+      return -1;
   }
-
-  r_printf("OK!\n");
 
   return 0;
 }
