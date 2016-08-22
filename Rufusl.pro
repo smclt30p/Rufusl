@@ -44,7 +44,8 @@ HEADERS  += ui/rufuswindow.h \
     linux/partition.h \
     linux/fat32.h \
     definitions.h \
-    iso.h
+    iso.h \
+    rufusl.h
 
 FORMS    += ui/rufuswindow.ui \
     ui/log.ui \

@@ -110,7 +110,7 @@ void RufusWindow::setupUi()
 
     /* Add DeviceComboBox to UI */
 
-    this->box = new DeviceComboBox(this->ui->layoutWidget, this);
+    this->box = new DeviceComboBox(this->ui->container, this);
     this->box->setObjectName(QStringLiteral("deviceCombo"));
     this->ui->horizontalLayout->addWidget(box);
 

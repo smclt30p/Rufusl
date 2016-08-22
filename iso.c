@@ -11,6 +11,7 @@
 #include "iso.h"
 #include "log.h"
 #include "definitions.h"
+#include "rufusl.h"
 
 static char* dest = "/mnt/temp";
 static iso_info_t info;
