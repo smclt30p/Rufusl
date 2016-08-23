@@ -5,6 +5,12 @@
 
 bool About::isOpen;
 
+void About::reject()
+{
+    About::isOpen = false;
+    QDialog::reject();
+}
+
 About::About(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::About)

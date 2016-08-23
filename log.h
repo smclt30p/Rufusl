@@ -19,6 +19,9 @@ class Log : public QDialog
 {
     Q_OBJECT
 
+private:
+    void reject();
+
 public:
     static bool logOpen;
     explicit Log(QWidget *parent = 0);

@@ -60,6 +60,14 @@ void Log::write(char *msg)
     free(msg);
 }
 
+void Log::reject()
+{
+
+    Log::logOpen = false;
+    QDialog::reject();
+
+}
+
 void write_c(Log *ptr, char *msg) {
     emit ptr->call_write(msg);
 }

@@ -11,6 +11,9 @@ class About : public QDialog
 {
     Q_OBJECT
 
+private:
+    void reject();
+
 public:
     explicit About(QWidget *parent = 0);
     static bool isOpen;
