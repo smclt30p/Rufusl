@@ -16,18 +16,6 @@
     <verstretch>0</verstretch>
    </sizepolicy>
   </property>
-  <property name="minimumSize">
-   <size>
-    <width>382</width>
-    <height>557</height>
-   </size>
-  </property>
-  <property name="maximumSize">
-   <size>
-    <width>382</width>
-    <height>564</height>
-   </size>
-  </property>
   <property name="windowTitle">
    <string>Rufusl 0.1</string>
   </property>
