@@ -3,6 +3,8 @@ An effor to bring Pete's Rufus to Linux
 
 ###DEVELOPMENT HALTED
 
+Lack of free time.
+
 ![alt text](http://i.imgur.com/QeBfuuh.png "Logo Title Text 1")
 
 ## It is still a work in progress! Not guaranteed to work, at all!
